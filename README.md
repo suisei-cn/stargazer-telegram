@@ -2,7 +2,7 @@
 
 ![Publish Docker](https://github.com/suisei-cn/stargazer-telegram/workflows/Publish%20Docker/badge.svg)
 
-Stargazer Telegram is the telegram frontend for [PyStargazer](https://github.com/suisei-cn/stargazer-subscriber)
+Stargazer Telegram is the telegram frontend for [PyStargazer](https://github.com/suisei-cn/pystargazer)
 and Stargazer Subscriber Backend.
 
 It's one of all the stargazer bots, which allow users of different instant messaging apps
@@ -16,9 +16,10 @@ Telegram: [@pystargazer_bot](https://t.me/pystargazer_bot)
 
 [Stargazer Subscriber](https://github.com/suisei-cn/stargazer-subscriber) - Stargazer Subscriber is the universal frontend of stargazer bots.
 
-`Stargazer Subscriber Backend` - The python backend of stargazer subscriber.
+[Stargazer Subscriber Backend](https://github.com/suisei-cn/stargazer-subscriber-backend) - The python backend of stargazer subscriber.
 
-`StargazerQQ` - UserID: 2733773638
+[Stargazer QQ](https://github.com/suisei-cn/stargazer-qq) (2733773638) - The QQ frontend for [PyStargazer](https://github.com/suisei-cn/pystargazer)
+and Stargazer Subscriber Backend. 
 
 ## Deploy
 
