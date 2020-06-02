@@ -1,5 +1,7 @@
 # Stargazer Telegram
 
+![Publish Docker](https://github.com/suisei-cn/stargazer-telegram/workflows/Publish%20Docker/badge.svg)
+
 Stargazer Telegram is the telegram frontend for [PyStargazer](https://github.com/suisei-cn/stargazer-subscriber)
 and Stargazer Subscriber Backend.
 
