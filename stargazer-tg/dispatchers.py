@@ -7,6 +7,7 @@ from urllib.parse import urljoin
 from aiogram import Bot
 from aiogram.utils.exceptions import BadRequest, BotBlocked, BotKicked, CantInitiateConversation, ChatNotFound, \
     RetryAfter
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from httpx import AsyncClient
 
 from .utils import escape_md_v2
@@ -41,13 +42,16 @@ class MessageDispatcher:
         if images := message["images"]:
             if len(images) > 1:
                 input_images = [{"type": "photo", "media": image} for image in images]
-                await self._dispatch(topic, event_type, self.bot.send_message, message["body"], parse_mode="MarkdownV2")
+                await self._dispatch(topic, event_type, self.bot.send_message, message["body"], parse_mode="MarkdownV2",
+                                     reply_markup=message["link"])
                 await self._dispatch(topic, event_type, self.bot.send_media_group, input_images)
             else:
                 await self._dispatch(topic, event_type, self.bot.send_photo, images[0],
+                                     reply_markup=message["link"],
                                      caption=message["body"], parse_mode="MarkdownV2")
         else:
-            await self._dispatch(topic, event_type, self.bot.send_message, message["body"], parse_mode="MarkdownV2")
+            await self._dispatch(topic, event_type, self.bot.send_message, message["body"],
+                                 reply_markup=message["link"], parse_mode="MarkdownV2")
 
     @staticmethod
     def _build(event: dict) -> dict:
@@ -66,9 +70,11 @@ class MessageDispatcher:
 
         msg_body = "\n".join(msg_body)
 
-        link = f"[链接]({link})" if (link := event["data"].get("link")) else ""
-        return {"body": "".join([escape_md_v2(f"#{name} #{tag}\n{msg_body}\n"), link]),
-                "images": images}
+        link = InlineKeyboardMarkup(row_width=1, inline_keyboard=[[InlineKeyboardButton(text="链接", url=link)]])\
+            if (link := event["data"].get("link")) else None
+        return {"body": escape_md_v2(f"#{name} #{tag}\n{msg_body}\n"),
+                "images": images,
+                "link": link}
 
     async def _dispatch(self, topic: str, event_type: str, func, msg: Any = "", **kwargs):
         def _parse(user_string: str) -> Optional[str]:
