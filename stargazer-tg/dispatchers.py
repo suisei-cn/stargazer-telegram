@@ -19,6 +19,7 @@ event_map = {
     "bili_rt_dyn": "Bilibili转发",
     "bili_img_dyn": "Bilibili图片动态",
     "bili_video": "Bilibili视频",
+    "bili_live": "Bilibili直播",
     "ytb_video": "Youtube视频",
     "ytb_reminder": "Youtube直播提醒",
     "ytb_live": "Youtube直播",
