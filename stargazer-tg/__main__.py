@@ -83,7 +83,7 @@ async def settings(message: Message):
         token = r.text
         url = urljoin(FRONTEND_URL, f"auth?token={token}")
         msg = f"Please click the link below to set your preference.\n" \
-              f"The link will expire in 10 minutes.\n[Go to settings]({url})"
+              f"The link will expire in 10 minutes."
         link = InlineKeyboardMarkup(row_width=1,
                                     inline_keyboard=[[InlineKeyboardButton(text="Go to settings", url=url)]])
     elif r.status_code == 404:
