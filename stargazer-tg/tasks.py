@@ -1,4 +1,3 @@
-import os
 import json
 import logging
 from asyncio import Queue, create_task, sleep
@@ -8,9 +7,6 @@ import websockets
 from websockets.exceptions import ConnectionClosedError
 
 from .dispatchers import MessageDispatcher
-
-if telemetry := os.environ.get("telemetry", ""):
-    from sentry_sdk import capture_exception
 
 
 class EventTask:
@@ -28,8 +24,6 @@ class EventTask:
                 await self.dispatcher.dispatch(event)
             except Exception as e:
                 logging.exception("Exception occur in dispatcher worker.")
-                if telemetry:
-                    capture_exception(e)
 
             queue.task_done()
 

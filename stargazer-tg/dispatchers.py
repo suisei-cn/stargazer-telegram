@@ -1,18 +1,15 @@
 import asyncio
-import os
 import logging
 import traceback
-from typing import Optional, Any
+from typing import Any, Optional
 from urllib.parse import urljoin
 
 from aiogram import Bot
-from aiogram.utils.exceptions import BadRequest, BotBlocked, BotKicked, CantInitiateConversation, ChatNotFound, RetryAfter
+from aiogram.utils.exceptions import BadRequest, BotBlocked, BotKicked, CantInitiateConversation, ChatNotFound, \
+    RetryAfter
 from httpx import AsyncClient
 
 from .utils import escape_md_v2
-
-if telemetry := os.environ.get("telemetry", ""):
-    from sentry_sdk import capture_exception
 
 event_map = {
     "t_tweet": "Twitter推文",
@@ -91,19 +88,13 @@ class MessageDispatcher:
                     await func(user_id_str, _msg, **kwargs)
                 except RetryAfter as e:
                     retry = True
-                    logging.warning(f"Flood control exceeded. Retry in {e.timeout} + 5 seconds.")
-                    if telemetry:
-                        capture_exception(e)
+                    logging.error(f"Flood control exceeded. Retry in {e.timeout} + 5 seconds.")
                     await asyncio.sleep(e.timeout + 5)
                 except (BotBlocked, CantInitiateConversation, ChatNotFound, BotKicked) as e:
                     logging.warning(f"Banned/deleted/kicked/not added by chat {user_id_str}")
-                    if telemetry:
-                        capture_exception(e)
                 except BadRequest as e:
                     logging.error(f"Unable to send message: {_msg} {kwargs}")
                     traceback.print_exc()
-                    if telemetry:
-                        capture_exception(e)
 
         logging.info(f"Dispatcher: Incoming {event_type} event.")
         all_users = (await self.http_client.get(urljoin(self.backend_url, f"m2m/subs/{topic}"),

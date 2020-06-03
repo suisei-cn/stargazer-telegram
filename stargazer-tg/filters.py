@@ -1,6 +1,7 @@
 from typing import Union
-from aiogram.types import ChatType, Message, CallbackQuery, InlineQuery
+
 from aiogram.dispatcher.filters import AdminFilter
+from aiogram.types import CallbackQuery, ChatType, InlineQuery, Message
 
 
 class PrivilegedUser(AdminFilter):
@@ -23,5 +24,3 @@ class PrivilegedUser(AdminFilter):
         admins = [member.user.id for chat_id in chat_ids for member in await obj.bot.get_chat_administrators(chat_id)]
 
         return user_id in admins
-
-

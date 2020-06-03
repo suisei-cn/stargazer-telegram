@@ -1,3 +1,4 @@
+import logging
 import os
 from urllib.parse import urljoin
 
@@ -5,7 +6,6 @@ from aiogram import Bot, Dispatcher, executor
 from aiogram.types import Message
 from aiogram.utils.exceptions import BotBlocked, CantInitiateConversation
 from httpx import AsyncClient
-import logging
 
 from .dispatchers import MessageDispatcher
 from .filters import PrivilegedUser
@@ -13,6 +13,7 @@ from .tasks import EventTask
 
 if dsn := os.environ.get("telemetry", ""):
     import sentry_sdk
+
     sentry_sdk.init(dsn)
 
 BOT_TOKEN = os.environ["BOT_TOKEN"]
