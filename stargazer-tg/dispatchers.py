@@ -72,7 +72,7 @@ class MessageDispatcher:
 
         link = InlineKeyboardMarkup(row_width=1, inline_keyboard=[[InlineKeyboardButton(text="链接", url=link)]])\
             if (link := event["data"].get("link")) else None
-        return {"body": "".join([escape_md_v2(f"#{name} #{tag}\n{msg_body}\n"), link]),
+        return {"body": escape_md_v2(f"#{name} #{tag}\n{msg_body}\n"),
                 "images": images,
                 "link": link}
 
