@@ -3,7 +3,7 @@ import os
 from urllib.parse import urljoin
 
 from aiogram import Bot, Dispatcher, executor
-from aiogram.types import Message
+from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.exceptions import BotBlocked, CantInitiateConversation
 from httpx import AsyncClient
 
@@ -78,18 +78,21 @@ async def delete_account(message: Message):
 @dp.message_handler(PrivilegedUser(), commands=["settings"])
 async def settings(message: Message):
     r = await http_client.get(urljoin(BACKEND_URL, f"m2m/get_token/tg+{message.chat.id}"))
+    link = None
     if r.status_code == 200:
         token = r.text
         url = urljoin(FRONTEND_URL, f"auth?token={token}")
         msg = f"Please click the link below to set your preference.\n" \
               f"The link will expire in 10 minutes.\n[Go to settings]({url})"
+        link = InlineKeyboardMarkup(row_width=1,
+                                    inline_keyboard=[[InlineKeyboardButton(text="Go to settings", url=url)]])
     elif r.status_code == 404:
         msg = "User doesn't exist. Please first register by command /register."
     else:
         msg = "{r.status_code} {r.text}"
 
     try:
-        await bot.send_message(message.from_user.id, msg,
+        await bot.send_message(message.from_user.id, msg, reply_markup=link,
                                parse_mode="Markdown", disable_web_page_preview=True)
     except (BotBlocked, CantInitiateConversation):
         await message.answer("Oops! I can't send you the link because I don't know you.\n"
