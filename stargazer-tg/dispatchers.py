@@ -95,13 +95,12 @@ class MessageDispatcher:
                     await func(user_id_str, _msg, **kwargs)
                 except RetryAfter as e:
                     retry = True
-                    logging.error(f"Flood control exceeded. Retry in {e.timeout} + 5 seconds.")
+                    logging.warning(f"Flood control exceeded. Retry in {e.timeout} + 5 seconds.")
                     await asyncio.sleep(e.timeout + 5)
                 except (BotBlocked, CantInitiateConversation, ChatNotFound, BotKicked) as e:
                     logging.warning(f"Banned/deleted/kicked/not added by chat {user_id_str}")
                 except BadRequest as e:
-                    logging.error(f"Unable to send message: {_msg} {kwargs}")
-                    traceback.print_exc()
+                    logging.exception(f"Unable to send message: {_msg} {kwargs}")
 
         logging.info(f"Dispatcher: Incoming {event_type} event.")
         all_users = (await self.http_client.get(urljoin(self.backend_url, f"m2m/subs/{topic}"),
