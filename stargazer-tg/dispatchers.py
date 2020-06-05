@@ -1,13 +1,13 @@
 import asyncio
 import logging
-import traceback
+from functools import partial
 from typing import Any, Optional
 from urllib.parse import urljoin
 
 from aiogram import Bot
-from aiogram.utils.exceptions import BadRequest, BotBlocked, BotKicked, CantInitiateConversation, ChatNotFound, \
-    RetryAfter
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.utils.exceptions import BadRequest, BotBlocked, BotKicked, CantInitiateConversation, ChatNotFound, \
+    InvalidHTTPUrlContent, RetryAfter, WrongFileIdentifier
 from httpx import AsyncClient
 
 from .utils import escape_md_v2
@@ -39,20 +39,38 @@ class MessageDispatcher:
         topic = event["vtuber"]
         event_type = event["type"]
         message = self._build(event)
+        dispatch = partial(self._dispatch, topic, event_type)
 
         if images := message["images"]:
             if len(images) > 1:
                 input_images = [{"type": "photo", "media": image} for image in images]
-                await self._dispatch(topic, event_type, self.bot.send_message, message["body"], parse_mode="MarkdownV2",
-                                     reply_markup=message["link"])
-                await self._dispatch(topic, event_type, self.bot.send_media_group, input_images)
+                await dispatch(self.bot.send_message, message["body"], parse_mode="MarkdownV2",
+                               reply_markup=message["link"])
+                try:
+                    await dispatch(self.bot.send_media_group, input_images)
+                except BadRequest:
+                    logging.warning(f"Group send failed. Fallback to plaintext.\n{images}")
+                    await dispatch(self.bot.send_message, '\n'.join(images))
             else:
-                await self._dispatch(topic, event_type, self.bot.send_photo, images[0],
-                                     reply_markup=message["link"],
-                                     caption=message["body"], parse_mode="MarkdownV2")
+                for i in range(3):
+                    try:
+                        await dispatch(self.bot.send_photo, images[0],
+                                       reply_markup=message["link"],
+                                       caption=message["body"], parse_mode="MarkdownV2")
+                        break
+                    except InvalidHTTPUrlContent:
+                        logging.warning(f"Invalid URL Content: {message}. Retry {i + 1}/3.")
+                        pass
+                    except WrongFileIdentifier:
+                        logging.warning("Image send failed. Fallback to plaintext.")
+                        await dispatch(self.bot.send_message, f'{message["body"]}\n{escape_md_v2(images[0])}',
+                                       parse_mode="MarkdownV2", reply_markup=message["link"])
+                        break
+                    except BadRequest:
+                        logging.exception("Unable to send message.")
         else:
-            await self._dispatch(topic, event_type, self.bot.send_message, message["body"],
-                                 reply_markup=message["link"], parse_mode="MarkdownV2")
+            await dispatch(self.bot.send_message, message["body"],
+                           reply_markup=message["link"], parse_mode="MarkdownV2")
 
     @staticmethod
     def _build(event: dict) -> dict:
@@ -71,7 +89,7 @@ class MessageDispatcher:
 
         msg_body = "\n".join(msg_body)
 
-        link = InlineKeyboardMarkup(row_width=1, inline_keyboard=[[InlineKeyboardButton(text="链接", url=link)]])\
+        link = InlineKeyboardMarkup(row_width=1, inline_keyboard=[[InlineKeyboardButton(text="链接", url=link)]]) \
             if (link := event["data"].get("link")) else None
         return {"body": escape_md_v2(f"#{name} #{tag}\n{msg_body}\n"),
                 "images": images,
@@ -99,8 +117,6 @@ class MessageDispatcher:
                     await asyncio.sleep(e.timeout + 5)
                 except (BotBlocked, CantInitiateConversation, ChatNotFound, BotKicked) as e:
                     logging.warning(f"Banned/deleted/kicked/not added by chat {user_id_str}")
-                except BadRequest as e:
-                    logging.exception(f"Unable to send message: {_msg} {kwargs}")
 
         logging.info(f"Dispatcher: Incoming {event_type} event.")
         all_users = (await self.http_client.get(urljoin(self.backend_url, f"m2m/subs/{topic}"),

@@ -3,7 +3,7 @@ import os
 from urllib.parse import urljoin
 
 from aiogram import Bot, Dispatcher, executor
-from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
 from aiogram.utils.exceptions import BotBlocked, CantInitiateConversation
 from httpx import AsyncClient
 
