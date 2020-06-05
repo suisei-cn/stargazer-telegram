@@ -11,10 +11,10 @@ from .dispatchers import MessageDispatcher
 from .filters import PrivilegedUser
 from .tasks import EventTask
 
-if dsn := os.environ.get("telemetry", ""):
+if dsn := os.environ.get("TELEMETRY", ""):
     import sentry_sdk
 
-    sentry_sdk.init(dsn)
+    sentry_sdk.init(dsn, release=os.environ.get("TELEMETRY_RELEASE", None))
 
 BOT_TOKEN = os.environ["BOT_TOKEN"]
 PROXY = _proxy if (_proxy := os.environ.get("PROXY")) else None
