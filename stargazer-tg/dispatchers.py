@@ -7,7 +7,7 @@ from urllib.parse import urljoin
 from aiogram import Bot
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.exceptions import BadRequest, BotBlocked, BotKicked, CantInitiateConversation, ChatNotFound, \
-    InvalidHTTPUrlContent, RetryAfter, WrongFileIdentifier
+    InvalidHTTPUrlContent, MigrateToChat, RetryAfter, WrongFileIdentifier
 from httpx import AsyncClient
 
 from .utils import escape_md_v2
@@ -105,6 +105,18 @@ class MessageDispatcher:
                 return
             return user_id
 
+        async def rename_user(old_user_id: str, new_user_id: str):
+            old_user = f"tg+{old_user_id}"
+            new_user = f"tg+{new_user_id}"
+            r = await self.http_client.post(urljoin(self.backend_url, "users"), data=new_user)
+            if r.status_code == 409:
+                logging.warning(f"User {new_user_id} already exists. Ignored.")
+                return new_user_id
+            user_config = (await self.http_client.get(urljoin(self.backend_url, f"users/{old_user}"))).text
+            await self.http_client.put(urljoin(self.backend_url, f"users/{new_user}"), data=user_config)
+            await self.http_client.delete(urljoin(self.backend_url, f"users/{old_user}"))
+            return new_user_id
+
         async def send_msg(user_id_str: str, _msg: Any):
             retry = True
             while retry:
@@ -115,8 +127,13 @@ class MessageDispatcher:
                     retry = True
                     logging.warning(f"Flood control exceeded. Retry in {e.timeout} + 5 seconds.")
                     await asyncio.sleep(e.timeout + 5)
-                except (BotBlocked, CantInitiateConversation, ChatNotFound, BotKicked) as e:
+                except (BotBlocked, CantInitiateConversation, ChatNotFound, BotKicked):
                     logging.warning(f"Banned/deleted/kicked/not added by chat {user_id_str}")
+                except MigrateToChat as e:
+                    new_user_id = e.migrate_to_chat_id
+                    logging.warning(f"Chat {user_id_str} migrated to {new_user_id}. Renaming user.")
+                    user_id_str = await rename_user(user_id_str, new_user_id)
+                    retry = True
 
         logging.info(f"Dispatcher: Incoming {event_type} event.")
         all_users = (await self.http_client.get(urljoin(self.backend_url, f"m2m/subs/{topic}"),
