@@ -10,18 +10,18 @@ jobs:
     steps:
       - uses: actions/checkout@master
       - name: Publish to Dockerhub
-        uses: elgohr/Publish-Docker-Github-Action@master
+        uses: elgohr/Publish-Docker-Github-Action@v4
         with:
           name: photonquantum/stargazer-telegram
           username: ${{ secrets.PQ_DOCKER_USERNAME }}
           password: ${{ secrets.PQ_DOCKER_PASSWORD }}
           buildargs: TELEMETRY_RELEASE
       - name: Create a Sentry.io release
-        uses: tclindner/sentry-releases-action@v1.2.0
+        uses: getsentry/action-release@v1
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ORG: suiseicn
           SENTRY_PROJECT: stargazer-telegram
         with:
-          tagName: ${{ env.TELEMETRY_RELEASE }}
+          version: ${{ env.TELEMETRY_RELEASE }}
           environment: prod
