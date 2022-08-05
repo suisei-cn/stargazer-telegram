@@ -1,8 +1,9 @@
+import asyncio
 import logging
 import os
 from urllib.parse import urljoin
 
-from aiogram import Bot, Dispatcher, executor
+from aiogram import Bot, Dispatcher
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
 from aiogram.utils.exceptions import BotBlocked, CantInitiateConversation
 from httpx import AsyncClient
@@ -99,7 +100,18 @@ async def settings(message: Message):
                              "Please say something to me privately and try again!")
 
 
+async def main():
+    await dp.reset_webhook(True)
+    await dp.skip_updates()
+    logging.warning(f'Updates were skipped successfully.')
+
+    event_handle = asyncio.create_task(event_task.run(WORKERS))
+    bot_handle = asyncio.create_task(dp.start_polling())
+
+    await event_handle
+    await bot_handle
+
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    dp.loop.create_task(event_task.run(WORKERS))
-    executor.start_polling(dp, skip_updates=True)
+    asyncio.run(main())
