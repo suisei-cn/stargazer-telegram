@@ -108,12 +108,12 @@ class MessageDispatcher:
         async def rename_user(old_user_id: str, new_user_id: str):
             old_user = f"tg+{old_user_id}"
             new_user = f"tg+{new_user_id}"
-            r = await self.http_client.post(urljoin(self.backend_url, "users"), data=new_user)
+            r = await self.http_client.post(urljoin(self.backend_url, "users"), content=new_user)
             if r.status_code == 409:
                 logging.warning(f"User {new_user_id} already exists. Ignored.")
                 return new_user_id
             user_config = (await self.http_client.get(urljoin(self.backend_url, f"users/{old_user}"))).text
-            await self.http_client.put(urljoin(self.backend_url, f"users/{new_user}"), data=user_config)
+            await self.http_client.put(urljoin(self.backend_url, f"users/{new_user}"), content=user_config)
             await self.http_client.delete(urljoin(self.backend_url, f"users/{old_user}"))
             return new_user_id
 

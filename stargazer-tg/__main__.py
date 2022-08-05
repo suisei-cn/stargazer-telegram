@@ -44,7 +44,7 @@ http_client = AsyncClient(headers={"Authorization": f"Bearer {M2M_TOKEN}"})
 
 @dp.message_handler(PrivilegedUser(), commands=["register"])
 async def register(message: Message):
-    r = await http_client.post(urljoin(BACKEND_URL, "users"), data=f"tg+{message.chat.id}")
+    r = await http_client.post(urljoin(BACKEND_URL, "users"), content=f"tg+{message.chat.id}")
     if r.status_code == 409:
         await message.answer(f"Account already exists. Please use command /settings to set your preference.")
     elif r.status_code == 204:
