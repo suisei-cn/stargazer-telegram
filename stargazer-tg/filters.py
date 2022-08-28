@@ -1,6 +1,6 @@
 from typing import Union
 
-from aiogram.dispatcher.filters import AdminFilter
+from aiogram.dispatcher.filters import AdminFilter, ChatTypeFilter
 from aiogram.types import CallbackQuery, ChatType, InlineQuery, Message
 
 
@@ -10,14 +10,14 @@ class PrivilegedUser(AdminFilter):
 
         if self._check_current:
             if isinstance(obj, Message):
-                message = obj
+                chat = obj.chat
             elif isinstance(obj, CallbackQuery) and obj.message:
-                message = obj.message
+                chat = obj.message.chat
             else:
                 return False
-            if ChatType.is_private(message):
+            if chat.type == ChatType.PRIVATE:
                 return True
-            chat_ids = [message.chat.id]
+            chat_ids = [chat.id]
         else:
             chat_ids = self._chat_ids
 
